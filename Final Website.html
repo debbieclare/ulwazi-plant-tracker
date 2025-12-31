@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Plant Tracker</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: #f4fff4;
+        color: #222;
+        padding: 24px;
+      }
+
+      h1 {
+        text-align: center;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      nav {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin: 24px 0 32px;
+      }
+
+      nav a {
+        text-decoration: none;
+        font-weight: 600;
+        color: #333;
+        padding-bottom: 6px;
+        border-bottom: 2px solid transparent;
+      }
+
+      nav a.active {
+        border-bottom: 2px solid #4caf50;
+      }
+
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .plant-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #ddd;
+        padding: 14px 18px;
+        margin-bottom: 12px;
+      }
+
+      .plant-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .plant-title {
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .plant-type {
+        font-weight: 400;
+        color: #666;
+      }
+
+      .plant-meta {
+        font-size: 13px;
+        color: #555;
+      }
+
+      .plant-actions {
+        display: flex;
+        align-items: center;
+      }
+
+      .delete-btn {
+        background: none;
+        border: 1px solid #ccc;
+        padding: 6px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        color: #555;
+      }
+
+      .delete-btn:hover {
+        border-color: #d32f2f;
+        color: #d32f2f;
+      }
+
+      form {
+        background: #ffffff;
+        border: 1px solid #ddd;
+        padding: 24px;
+      }
+
+      label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 16px;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 6px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+
+      button[type="submit"] {
+        margin-top: 24px;
+        padding: 12px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button[type="submit"]:hover {
+        background: #43a047;
+      }
+
+      #noPlantsMessage {
+        text-align: center;
+        color: #777;
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>🌿 Plant Tracker</h1>
+
+    <nav>
+      <a href="#" id="link-add">Add New Plant</a>
+      <a href="#" id="link-view" class="active">My Plants</a>
+    </nav>
+
+    <div class="container">
+      <section id="view-section">
+        <div id="plantList"></div>
+        <p id="noPlantsMessage"></p>
+      </section>
+
+      <section id="add-section" style="display: none">
+        <form id="plantForm">
+          <label for="plantName">Plant Name</label>
+          <input type="text" id="plantName" required />
+
+          <label for="plantType">Plant Type</label>
+          <input type="text" id="plantType" required />
+
+          <label for="lastWatered">Last Watered Date</label>
+          <input type="date" id="lastWatered" required />
+
+          <label for="waterAmount">Water Amount (ml)</label>
+          <input type="number" id="waterAmount" required />
+
+          <button type="submit">Save Plant</button>
+        </form>
+      </section>
+    </div>
+
+    <script>
+      const linkView = document.getElementById("link-view");
+      const linkAdd = document.getElementById("link-add");
+      const viewSection = document.getElementById("view-section");
+      const addSection = document.getElementById("add-section");
+      const plantList = document.getElementById("plantList");
+      const noPlantsMessage = document.getElementById("noPlantsMessage");
+      const plantForm = document.getElementById("plantForm");
+
+      function getPlants() {
+        return JSON.parse(localStorage.getItem("plants")) || [];
+      }
+
+      function savePlants(plants) {
+        localStorage.setItem("plants", JSON.stringify(plants));
+      }
+
+      function simulateMoisture() {
+        return Math.floor(Math.random() * (100 - 30) + 30);
+      }
+
+      function renderPlants() {
+        const plants = getPlants();
+        plantList.innerHTML = "";
+
+        if (plants.length === 0) {
+          noPlantsMessage.textContent = "No plants saved yet.";
+          return;
+        }
+
+        noPlantsMessage.textContent = "";
+
+        plants.forEach((p, index) => {
+          const card = document.createElement("div");
+          card.className = "plant-card";
+
+          card.innerHTML = `
+          <div class="plant-info">
+            <div class="plant-title">
+              ${p.name} <span class="plant-type">(${p.type})</span>
+            </div>
+            <div class="plant-meta">
+              Last watered: ${p.date} • ${
+            p.amount
+          } ml • Moisture ${simulateMoisture()}%
+            </div>
+          </div>
+
+          <div class="plant-actions">
+            <button class="delete-btn" data-index="${index}">Delete</button>
+          </div>
+        `;
+
+          plantList.appendChild(card);
+        });
+      }
+
+      plantList.addEventListener("click", (e) => {
+        if (!e.target.classList.contains("delete-btn")) return;
+
+        const index = e.target.dataset.index;
+        const plants = getPlants();
+
+        if (confirm("Delete this plant?")) {
+          plants.splice(index, 1);
+          savePlants(plants);
+          renderPlants();
+        }
+      });
+
+      function showView() {
+        viewSection.style.display = "block";
+        addSection.style.display = "none";
+        linkView.classList.add("active");
+        linkAdd.classList.remove("active");
+        renderPlants();
+      }
+
+      function showAdd() {
+        addSection.style.display = "block";
+        viewSection.style.display = "none";
+        linkAdd.classList.add("active");
+        linkView.classList.remove("active");
+      }
+
+      linkView.addEventListener("click", (e) => {
+        e.preventDefault();
+        showView();
+      });
+
+      linkAdd.addEventListener("click", (e) => {
+        e.preventDefault();
+        showAdd();
+      });
+
+      plantForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const plant = {
+          name: plantName.value.trim(),
+          type: plantType.value.trim(),
+          date: lastWatered.value,
+          amount: Number(waterAmount.value),
+        };
+
+        if (!plant.name || !plant.type || !plant.date || !plant.amount) {
+          alert("Please fill in all fields.");
+          return;
+        }
+
+        const plants = getPlants();
+        plants.push(plant);
+        savePlants(plants);
+
+        this.reset();
+        showView();
+      });
+
+      showView();
+    </script>
+  </body>
+</html>
